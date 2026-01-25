@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environments
+sashflow-env/
+venv/
+
+# Audio
+tracks/
+*.mp3
+*.wav
+*.flac
+
+# Data
+data/
+
+# OS
+.DS_Store
+Thumbs.db
+
