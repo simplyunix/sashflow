@@ -1,7 +1,7 @@
 # SASHflow 🎧
 
 **SASHflow** is a Python-based audio analysis tool for DJs and electronic music producers.  
-It analyzes tracks to extract **BPM**, **musical key**, and (planned) **drop detection** to help prepare smooth mixes for house, trance, and dance anthems.
+It analyzes tracks to extract **BPM**, **musical key**, and (planned) **drop detection**, helping you prepare smooth mixes for house, trance, and dance anthems.
 
 ---
 
@@ -32,42 +32,40 @@ Python 3.9+
 
 Git
 
-FFmpeg (audio decoding backend)
+FFmpeg (for audio decoding)
 
 🚀 Installation
-🐧 Linux (Ubuntu 24.04 / macOS / WSL)
-Install system dependencies:
-
+🐧 Linux (Ubuntu 24.04 / WSL / macOS)
+# Install system dependencies
 sudo apt update
 sudo apt install ffmpeg libsndfile1
-Clone the repo:
 
+# Clone the repository
 git clone https://github.com/simplyunix/sashflow.git
 cd sashflow
-Create & activate a virtual environment:
 
+# Create & activate virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
-Install Python dependencies:
 
+# Install Python dependencies
 pip install -r requirements.txt
-Run the analyzer:
 
+# Run the analyzer
 python analysis/bpm_key_scan.py tracks/house-405231.mp3
 🪟 Windows
-Clone the repo:
-
+# Clone the repository
 git clone https://github.com/simplyunix/sashflow.git
 cd sashflow
-Create & activate a virtual environment:
 
+# Create & activate virtual environment
 python -m venv sashflow-env
 .\sashflow-env\Scripts\activate
-Install dependencies:
 
+# Install dependencies
 pip install -r requirements.txt
-Run the analyzer:
 
+# Run the analyzer
 python analysis\bpm_key_scan.py "tracks\house-405231.mp3"
 🧪 Output
 The analyzer returns:
@@ -84,26 +82,48 @@ Duration: 190.0 sec
 BPM: 117.5
 Key: G
 🧼 Git Hygiene (Important)
-🚫 Never commit virtual environments or audio libraries
+🚫 Never commit virtual environments or audio libraries.
 
-Tracked:
+Quick Start / Cleanup
 
-Source code
+Activate the virtual environment:
+
+Linux/macOS (.venv)
+
+source .venv/bin/activate
+Windows (sashflow-env)
+
+.\sashflow-env\Scripts\activate
+Run the analyzer:
+
+python analysis/bpm_key_scan.py <path-to-audio-file>
+Example:
+
+python analysis/bpm_key_scan.py tracks/house-405231.mp3
+Deactivate the virtual environment when done:
+
+Linux/macOS / Windows
+
+deactivate
+This returns your shell to the system Python, keeping your environment clean for the next session.
+
+✅ Tracked Files
+Source code (analysis/)
 
 requirements.txt
 
 README.md
 
-Ignored:
+Small example tracks (optional)
 
+❌ Ignored
 .venv/
-
 sashflow-env/
-
 tracks/
-
 __pycache__/
-
+*.pyc
+.DS_Store
+Thumbs.db
 🛣 Roadmap
 Drop detection using energy + spectral flux
 
@@ -125,7 +145,14 @@ Commit clean changes
 Open a Pull Request
 
 📄 License
-MIT License — see LICENSE
+MIT License — see LICENSE file
 
 
 ---
+
+This version is:
+
+- ✅ Fully cross-platform  
+- ✅ Properly formatted for GitHub markdown  
+- ✅ Includes virtual environment instructions and cleanup  
+- ✅ Safe Git hygiene advice for `.venv` and `sashflow-env`  
