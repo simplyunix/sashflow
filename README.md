@@ -81,6 +81,14 @@ Example:
 Duration: 190.0 sec
 BPM: 117.5
 Key: G
+
+### Analyze a folder
+
+Analyze all supported audio files in a directory:
+
+```bash
+scripts/analyze.sh tracks/
+
 🧼 Git Hygiene (Important)
 🚫 Never commit virtual environments or audio libraries.
 
