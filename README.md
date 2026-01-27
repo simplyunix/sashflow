@@ -120,8 +120,6 @@ Source code (analysis/)
 
 requirements.txt
 
-README.md
-
 Small example tracks (optional)
 
 ❌ Ignored
@@ -155,12 +153,13 @@ Open a Pull Request
 📄 License
 MIT License — see LICENSE file
 
-
 ---
-
 This version is:
 
 - ✅ Fully cross-platform  
 - ✅ Properly formatted for GitHub markdown  
 - ✅ Includes virtual environment instructions and cleanup  
 - ✅ Safe Git hygiene advice for `.venv` and `sashflow-env`  
+- ✅ All tracks in a folder analyzed
+- ✅ Duration, BPM, Key, and Camelot exported
+- ✅ CSV with headers, ready for sorting in Excel, LibreOffice, or Rekordbox
