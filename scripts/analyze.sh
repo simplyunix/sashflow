@@ -5,7 +5,6 @@ set -e
 # Go to repo root (script may be run from anywhere)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-
 cd "$REPO_ROOT"
 
 # Check virtual environment
@@ -19,42 +18,42 @@ fi
 source .venv/bin/activate
 
 TARGET="$1"
+OUTPUT_CSV="analysis_results.csv"
 
 if [ -z "$TARGET" ]; then
   echo "Usage: ./scripts/analyze.sh <audio-file-or-folder>"
   exit 1
 fi
 
-OUTPUT_CSV="analysis_results.csv"
-
-# If folder, prepare CSV
-if [ -d "$TARGET" ]; then
-  echo "filename,duration_sec,bpm,key" > "$OUTPUT_CSV"
-fi
+# Overwrite CSV with headers if folder or new run
+echo "File,Duration (s),BPM,Key,Camelot" > "$OUTPUT_CSV"
 
 analyze_file () {
   FILE="$1"
   echo "----------------------------------------"
   echo "Analyzing: $FILE"
 
-  RESULT=$(python3 analysis/bpm_key_scan.py "$FILE")
+  # Call Python analysis
+  python3 - <<EOF
+from analysis.bpm_key_scan import analyze_track, CAMELOT_MAP
+import os, csv
 
-  echo "$RESULT"
+track_data = analyze_track("$FILE")
+csv_file = "$OUTPUT_CSV"
 
-  if [ -f "$OUTPUT_CSV" ]; then
-    DURATION=$(echo "$RESULT" | grep "Duration" | awk '{print $2}')
-    BPM=$(echo "$RESULT" | grep "BPM" | awk '{print $2}')
-    KEY=$(echo "$RESULT" | grep "Key" | awk '{print $2}')
-    BASENAME=$(basename "$FILE")
-
-    echo "$BASENAME,$DURATION,$BPM,$KEY" >> "$OUTPUT_CSV"
-  fi
+# Append to CSV
+with open(csv_file, "a", newline="") as f:
+    writer = csv.DictWriter(f, fieldnames=["File","Duration (s)","BPM","Key","Camelot"])
+    writer.writerow(track_data)
+EOF
 }
 
 if [ -f "$TARGET" ]; then
   analyze_file "$TARGET"
 elif [ -d "$TARGET" ]; then
-  for FILE in "$TARGET"/*.mp3; do
+  # Loop over common audio formats
+  for FILE in "$TARGET"/*.{mp3,wav,flac}; do
+    [ -e "$FILE" ] || continue
     analyze_file "$FILE"
   done
   echo "----------------------------------------"
