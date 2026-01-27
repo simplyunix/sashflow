@@ -1,54 +1,67 @@
 #!/usr/bin/env bash
+
 set -e
 
-# Always run from repo root
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Go to repo root (script may be run from anywhere)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 cd "$REPO_ROOT"
 
-# Ensure virtual environment is active
-if [[ -z "$VIRTUAL_ENV" ]]; then
-  if [[ -d ".venv" ]]; then
-    source .venv/bin/activate
-  else
-    echo "Virtual environment not found!"
-    echo "Run:"
-    echo "  python3 -m venv .venv"
-    echo "  source .venv/bin/activate"
-    exit 1
-  fi
-fi
-
-TARGET="$1"
-
-if [[ -z "$TARGET" ]]; then
-  echo "Usage:"
-  echo "  scripts/analyze.sh <audio-file | folder>"
+# Check virtual environment
+if [ ! -d ".venv" ]; then
+  echo "Virtual environment not found! Please run:"
+  echo "  python3 -m venv .venv"
+  echo "  source .venv/bin/activate"
   exit 1
 fi
 
-# If single file
-if [[ -f "$TARGET" ]]; then
-  python3 analysis/bpm_key_scan.py "$TARGET"
-  exit 0
+source .venv/bin/activate
+
+TARGET="$1"
+
+if [ -z "$TARGET" ]; then
+  echo "Usage: ./scripts/analyze.sh <audio-file-or-folder>"
+  exit 1
 fi
 
-# If directory
-if [[ -d "$TARGET" ]]; then
-  shopt -s nullglob
-  FILES=("$TARGET"/*.mp3 "$TARGET"/*.wav "$TARGET"/*.flac)
+OUTPUT_CSV="analysis_results.csv"
 
-  if [[ ${#FILES[@]} -eq 0 ]]; then
-    echo "No audio files found in $TARGET"
-    exit 0
+# If folder, prepare CSV
+if [ -d "$TARGET" ]; then
+  echo "filename,duration_sec,bpm,key" > "$OUTPUT_CSV"
+fi
+
+analyze_file () {
+  FILE="$1"
+  echo "----------------------------------------"
+  echo "Analyzing: $FILE"
+
+  RESULT=$(python3 analysis/bpm_key_scan.py "$FILE")
+
+  echo "$RESULT"
+
+  if [ -f "$OUTPUT_CSV" ]; then
+    DURATION=$(echo "$RESULT" | grep "Duration" | awk '{print $2}')
+    BPM=$(echo "$RESULT" | grep "BPM" | awk '{print $2}')
+    KEY=$(echo "$RESULT" | grep "Key" | awk '{print $2}')
+    BASENAME=$(basename "$FILE")
+
+    echo "$BASENAME,$DURATION,$BPM,$KEY" >> "$OUTPUT_CSV"
   fi
+}
 
-  for file in "${FILES[@]}"; do
-    echo "----------------------------------------"
-    python3 analysis/bpm_key_scan.py "$file"
+if [ -f "$TARGET" ]; then
+  analyze_file "$TARGET"
+elif [ -d "$TARGET" ]; then
+  for FILE in "$TARGET"/*.mp3; do
+    analyze_file "$FILE"
   done
-
-  exit 0
+  echo "----------------------------------------"
+  echo "CSV report saved to: $OUTPUT_CSV"
+else
+  echo "Invalid path: $TARGET"
+  exit 1
 fi
 
-echo "Error: '$TARGET' is not a file or directory"
-exit 1
+deactivate
