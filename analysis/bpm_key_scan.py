@@ -5,60 +5,67 @@ import numpy as np
 
 # Camelot key mapping
 CAMELOT_MAP = {
-    "C": "8B",  "G": "9B",  "D": "10B", "A": "11B", "E": "12B",
-    "B": "1B",  "F#": "2B", "C#": "3B", "G#": "4B",  "D#": "5B",
+    "C": "8B", "G": "9B", "D": "10B", "A": "11B", "E": "12B",
+    "B": "1B", "F#": "2B", "C#": "3B", "G#": "4B", "D#": "5B",
     "A#": "6B", "F": "7B",
 
-    "Am": "8A",  "Em": "9A",  "Bm": "10A", "F#m": "11A", "C#m": "12A",
-    "G#m": "1A", "D#m": "2A", "A#m": "3A",  "Fm": "4A",  "Cm": "5A",
-    "Gm": "6A",  "Dm": "7A",
+    "Am": "8A", "Em": "9A", "Bm": "10A", "F#m": "11A", "C#m": "12A",
+    "G#m": "1A", "D#m": "2A", "A#m": "3A", "Fm": "4A", "Cm": "5A",
+    "Gm": "6A", "Dm": "7A",
 }
 
-# Estimate BPM
+# ---------------- BPM & KEY ----------------
+
 def estimate_bpm(y, sr):
     tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
     return round(float(tempo.item()), 1)
 
-# Estimate musical key
 def estimate_key(y, sr):
     chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     chroma_mean = np.mean(chroma, axis=1)
     keys = ["C", "C#", "D", "D#", "E", "F",
             "F#", "G", "G#", "A", "A#", "B"]
-    key_index = np.argmax(chroma_mean)
-    return keys[key_index]
+    return keys[np.argmax(chroma_mean)]
 
-# Detect energy for drop points
-def detect_energy_sections(y, sr):
-    hop_length = 512
-    rms = librosa.feature.rms(y=y, hop_length=hop_length)[0]
-    times = librosa.frames_to_time(range(len(rms)), sr=sr, hop_length=hop_length)
-
-    avg_energy = np.mean(rms)
-    low_threshold = avg_energy * 0.6
-    high_threshold = avg_energy * 1.4
-
-    low_energy_times = times[rms < low_threshold]
-    high_energy_times = times[rms > high_threshold]
-
-    return low_energy_times, high_energy_times
-
-def detect_first_drop(high_energy_times):
-    if len(high_energy_times) == 0:
-        return None
-    return round(float(high_energy_times[0]), 1)
+# ---------------- ENERGY ----------------
 
 def calculate_energy_score(y):
     rms = librosa.feature.rms(y=y)[0]
     avg_energy = float(np.mean(rms))
     peak_energy = float(np.max(rms))
+    return round(peak_energy / avg_energy, 2) if avg_energy > 0 else 0
 
-    if avg_energy == 0:
-        return 0
+# ---------------- MIX POINTS ----------------
 
-    return round(peak_energy / avg_energy, 2)
+def detect_mix_points(y, sr):
+    hop_length = 512
+    rms = librosa.feature.rms(y=y, hop_length=hop_length)[0]
+    times = librosa.frames_to_time(range(len(rms)), sr=sr, hop_length=hop_length)
 
-# Analyze a single track
+    avg_energy = np.mean(rms)
+    low_threshold = avg_energy * 0.7
+    high_threshold = avg_energy * 1.5
+
+    low_energy_times = times[rms < low_threshold]
+    high_energy_times = times[rms > high_threshold]
+
+    mix_in = float(low_energy_times[0]) if len(low_energy_times) else 0.0
+    mix_out = float(low_energy_times[-1]) if len(low_energy_times) else None
+    energy_drop = float(high_energy_times[0]) if len(high_energy_times) else None
+
+    return round(mix_in,1), round(energy_drop,1) if energy_drop else None, round(mix_out,1) if mix_out else None
+
+# ---------------- MUSICAL DROP ----------------
+
+def detect_true_drop(y, sr):
+    onset_env = librosa.onset.onset_strength(y=y, sr=sr)
+    times = librosa.frames_to_time(range(len(onset_env)), sr=sr)
+    threshold = np.mean(onset_env) * 1.8
+    strong = times[onset_env > threshold]
+    return round(float(strong[0]),1) if len(strong) else None
+
+# ---------------- MAIN ANALYSIS ----------------
+
 def analyze_track(path):
     print(f"Analyzing: {path}")
 
@@ -68,18 +75,22 @@ def analyze_track(path):
     bpm = estimate_bpm(y, sr)
     key = estimate_key(y, sr)
     camelot = CAMELOT_MAP.get(key, "Unknown")
-
-    low_energy, high_energy = detect_energy_sections(y, sr)
-    first_drop = detect_first_drop(high_energy)
-
     energy_score = calculate_energy_score(y)
+
+    mix_in, energy_drop, mix_out = detect_mix_points(y, sr)
+    true_drop = detect_true_drop(y, sr)
 
     print(f"Duration: {round(duration,1)} sec")
     print(f"BPM: {bpm}")
-    print(f"Key: {key}  |  Camelot: {camelot}")
+    print(f"Key: {key} | Camelot: {camelot}")
     print(f"Energy Score: {energy_score}")
-    if first_drop is not None:
-        print(f"First Drop Around: {first_drop} sec")
+    print(f"Mix In Around: {mix_in} sec")
+    if true_drop:
+        print(f"True Drop At: {true_drop} sec")
+    elif energy_drop:
+        print(f"Energy Drop Around: {energy_drop} sec")
+    if mix_out:
+        print(f"Mix Out Around: {mix_out} sec")
 
     return {
         "File": os.path.basename(path),
@@ -87,21 +98,21 @@ def analyze_track(path):
         "BPM": bpm,
         "Key": key,
         "Camelot": camelot,
-        "First Drop (s)": first_drop if first_drop is not None else "",
-        "Energy Score": energy_score
+        "Energy Score": energy_score,
+        "Mix In (s)": mix_in,
+        "First Drop (s)": energy_drop if energy_drop else "",
+        "True Drop (s)": true_drop if true_drop else "",
+        "Mix Out (s)": mix_out if mix_out else ""
     }
 
-# Append results to CSV
+# ---------------- CSV ----------------
+
 def append_to_csv(results, csv_path="analysis_results.csv"):
     fieldnames = [
-    "File",
-    "Duration (s)",
-    "BPM",
-    "Key",
-    "Camelot",
-    "First Drop (s)",
-    "Energy Score"
-]
+        "File","Duration (s)","BPM","Key","Camelot",
+        "Energy Score","Mix In (s)","First Drop (s)",
+        "True Drop (s)","Mix Out (s)"
+    ]
 
     write_header = not os.path.isfile(csv_path) or os.path.getsize(csv_path) == 0
 
@@ -111,34 +122,20 @@ def append_to_csv(results, csv_path="analysis_results.csv"):
             writer.writeheader()
         writer.writerow(results)
 
-# Analyze file or folder (with subfolders)
+# ---------------- RUNNER ----------------
+
 def analyze_path(input_path, csv_path="analysis_results.csv"):
     if os.path.isfile(input_path):
-        results = analyze_track(input_path)
-        append_to_csv(results, csv_path)
+        append_to_csv(analyze_track(input_path), csv_path)
     elif os.path.isdir(input_path):
         for root, _, files in os.walk(input_path):
             for file in sorted(files):
                 if file.lower().endswith((".mp3",".wav",".flac")):
-                    full_path = os.path.join(root, file)
-                    print("-" * 40)
-                    results = analyze_track(full_path)
-                    append_to_csv(results, csv_path)
+                    print("-"*40)
+                    append_to_csv(analyze_track(os.path.join(root,file)), csv_path)
     else:
         print("Invalid path:", input_path)
 
-# Calcluate energy detection functions
-def calculate_energy_score(y):
-    rms = librosa.feature.rms(y=y)[0]
-    avg_energy = float(np.mean(rms))
-    peak_energy = float(np.max(rms))
-
-    if avg_energy == 0:
-        return 0
-
-    return round(peak_energy / avg_energy, 2)
-
-# CLI entry
 if __name__ == "__main__":
     import sys
     if len(sys.argv) != 2:
