@@ -1,165 +1,120 @@
 # SASHflow 🎧
 
-**SASHflow** is a Python-based audio analysis tool for DJs and electronic music producers.  
-It analyzes tracks to extract **BPM**, **musical key**, and (planned) **drop detection**, helping you prepare smooth mixes for house, trance, and dance anthems.
+**SASHflow** is a Python‑based audio analysis tool for DJs and electronic music enthusiasts.  
+It analyzes audio tracks to extract **BPM**, **musical key** (with *Camelot notation*), and **estimated drop point** — helping you prepare harmonic, energy‑aware mixes.
 
 ---
 
-## ✨ Features
+## 🧠 What it Does Now
 
-- 🎵 BPM detection  
-- 🎼 Musical key detection  
-- 🔥 Drop detection *(planned)*  
-- 🐍 Lightweight, Python-first workflow  
-- 🧑‍💻 Cross-platform (Linux, macOS, Windows)
+SASHflow analyzes audio files and reports:
+
+- 🥁 **BPM** (Beat Per Minute)  
+- 🎼 **Key** (musical key)  
+- 🌀 **Camelot** notation (DJ‑friendly harmonic key)  
+- 🔥 **First Drop** location (in seconds) — useful for mix points  
+- 📊 **CSV output** for library analysis and playlist building
 
 ---
 
-## 📦 Project Structure
+## 📦 Features
 
-```text
-sashflow/
-├── analysis/           # Audio analysis modules
-│   └── bpm_key_scan.py
-├── scripts/            # Dev / helper scripts
-├── tracks/             # Example tracks (optional, not tracked)
-├── main.py
-├── requirements.txt
-├── README.md
-└── .gitignore
-🔧 Prerequisites
-Python 3.9+
+✔ BPM detection via *librosa*  
+✔ Musical key and Camelot notation  
+✔ First drop detection using RMS energy thresholds  
+✔ Batch folder analysis  
+✔ CSV export for set planning  
+✔ Works on Linux/macOS/Windows
 
-Git
+---
 
-FFmpeg (for audio decoding)
+## ⚙️ Prerequisites
 
-🚀 Installation
-🐧 Linux (Ubuntu 24.04 / WSL / macOS)
-# Install system dependencies
+Before using SASHflow, make sure you have:
+
+- Python **3.9+**
+- FFmpeg (for audio decoding)
+- Git
+
+---
+
+## 🛠 Installation
+
+### Linux / macOS / WSL
+
+```bash
 sudo apt update
 sudo apt install ffmpeg libsndfile1
-
-# Clone the repository
 git clone https://github.com/simplyunix/sashflow.git
 cd sashflow
 
-# Create & activate virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Install Python dependencies
 pip install -r requirements.txt
-
-# Run the analyzer
-python analysis/bpm_key_scan.py tracks/house-405231.mp3
-🪟 Windows
-# Clone the repository
+Windows (PowerShell)
 git clone https://github.com/simplyunix/sashflow.git
 cd sashflow
 
-# Create & activate virtual environment
 python -m venv sashflow-env
 .\sashflow-env\Scripts\activate
 
-# Install dependencies
 pip install -r requirements.txt
+🚀 Usage
+Analyze a single file
+./scripts/analyze.sh "tracks/house-405231.mp3"
+Analyze an entire folder
+./scripts/analyze.sh tracks/
+This will produce:
 
-# Run the analyzer
-python analysis\bpm_key_scan.py "tracks\house-405231.mp3"
-🧪 Output
-The analyzer returns:
+analysis_results.csv
+Containing:
 
-Track duration (seconds)
+File,Duration (s),BPM,Key,Camelot,First Drop (s)
+track1.mp3,...,...,...,9B,15.5
+track2.mp3,...,...,...,8B,18.0
+🧾 Example Output
+File,Duration (s),BPM,Key,Camelot,First Drop (s)
+deep-house-..,.226.2,129.2,A,11B,15.5
+house-405231.mp3,190.0,117.5,G,9B,4.0
+This CSV can be imported into Excel, Rekordbox, or other DJ tools for planning harmonic and tempo‑aware sets.
 
-Estimated BPM
+🧹 Git Hygiene
+Make sure your commits do not include:
 
-Musical key
-
-Example:
-
-Duration: 190.0 sec
-BPM: 117.5
-Key: G
-
-### Analyze a folder
-
-Analyze all supported audio files in a directory:
-
-```bash
-scripts/analyze.sh tracks/
-
-🧼 Git Hygiene (Important)
-🚫 Never commit virtual environments or audio libraries.
-
-Quick Start / Cleanup
-
-Activate the virtual environment:
-
-Linux/macOS (.venv)
-
-source .venv/bin/activate
-Windows (sashflow-env)
-
-.\sashflow-env\Scripts\activate
-Run the analyzer:
-
-python analysis/bpm_key_scan.py <path-to-audio-file>
-Example:
-
-python analysis/bpm_key_scan.py tracks/house-405231.mp3
-Deactivate the virtual environment when done:
-
-Linux/macOS / Windows
-
-deactivate
-This returns your shell to the system Python, keeping your environment clean for the next session.
-
-✅ Tracked Files
-Source code (analysis/)
-
-requirements.txt
-
-Small example tracks (optional)
-
-❌ Ignored
 .venv/
 sashflow-env/
-tracks/
 __pycache__/
-*.pyc
-.DS_Store
-Thumbs.db
-🛣 Roadmap
-Drop detection using energy + spectral flux
+tracks/
+*.mp3
+*.wav
+*.flac
+Recommended .gitignore entries are already included.
 
-Beat-grid alignment
+📈 Next Steps / Roadmap
+This release focuses on analysis. Future planned upgrades include:
 
-Track-to-track mix suggestions
+📍 Breakdown detection (best mix‑out zones)
 
-CLI tool (sashflow analyze track.mp3)
+📊 Energy profiling and curve plots
 
-Rekordbox / Serato export (long-term)
+🎶 Auto playlist generation sorted by BPM + Camelot
 
-🤝 Contributing
+🛠 CLI tool mode (sashflow analyze <path>)
+
+🙌 Contributing
+If you’d like to help:
+
 Fork the repo
 
 Create a feature branch
 
-Commit clean changes
+Commit your changes
 
-Open a Pull Request
+Submit a pull request
 
-📄 License
-MIT License — see LICENSE file
+📝 License
+MIT License — see the LICENSE file
 
----
-This version is:
-
-- ✅ Fully cross-platform  
-- ✅ Properly formatted for GitHub markdown  
-- ✅ Includes virtual environment instructions and cleanup  
-- ✅ Safe Git hygiene advice for `.venv` and `sashflow-env`  
-- ✅ All tracks in a folder analyzed
-- ✅ Duration, BPM, Key, and Camelot exported
-- ✅ CSV with headers, ready for sorting in Excel, LibreOffice, or Rekordbox
+📬 Author
+Sasi Chand — Passionate about music, Python, and mixing flows 🌀
