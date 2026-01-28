@@ -48,6 +48,16 @@ def detect_first_drop(high_energy_times):
         return None
     return round(float(high_energy_times[0]), 1)
 
+def calculate_energy_score(y):
+    rms = librosa.feature.rms(y=y)[0]
+    avg_energy = float(np.mean(rms))
+    peak_energy = float(np.max(rms))
+
+    if avg_energy == 0:
+        return 0
+
+    return round(peak_energy / avg_energy, 2)
+
 # Analyze a single track
 def analyze_track(path):
     print(f"Analyzing: {path}")
@@ -62,9 +72,12 @@ def analyze_track(path):
     low_energy, high_energy = detect_energy_sections(y, sr)
     first_drop = detect_first_drop(high_energy)
 
+    energy_score = calculate_energy_score(y)
+
     print(f"Duration: {round(duration,1)} sec")
     print(f"BPM: {bpm}")
     print(f"Key: {key}  |  Camelot: {camelot}")
+    print(f"Energy Score: {energy_score}")
     if first_drop is not None:
         print(f"First Drop Around: {first_drop} sec")
 
@@ -74,12 +87,22 @@ def analyze_track(path):
         "BPM": bpm,
         "Key": key,
         "Camelot": camelot,
-        "First Drop (s)": first_drop if first_drop is not None else ""
+        "First Drop (s)": first_drop if first_drop is not None else "",
+        "Energy Score": energy_score
     }
 
 # Append results to CSV
 def append_to_csv(results, csv_path="analysis_results.csv"):
-    fieldnames = ["File","Duration (s)","BPM","Key","Camelot","First Drop (s)"]
+    fieldnames = [
+    "File",
+    "Duration (s)",
+    "BPM",
+    "Key",
+    "Camelot",
+    "First Drop (s)",
+    "Energy Score"
+]
+
     write_header = not os.path.isfile(csv_path) or os.path.getsize(csv_path) == 0
 
     with open(csv_path, "a", newline="", encoding="utf-8") as f:
@@ -103,6 +126,17 @@ def analyze_path(input_path, csv_path="analysis_results.csv"):
                     append_to_csv(results, csv_path)
     else:
         print("Invalid path:", input_path)
+
+# Calcluate energy detection functions
+def calculate_energy_score(y):
+    rms = librosa.feature.rms(y=y)[0]
+    avg_energy = float(np.mean(rms))
+    peak_energy = float(np.max(rms))
+
+    if avg_energy == 0:
+        return 0
+
+    return round(peak_energy / avg_energy, 2)
 
 # CLI entry
 if __name__ == "__main__":
