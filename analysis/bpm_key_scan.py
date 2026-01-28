@@ -23,56 +23,84 @@ def estimate_bpm(y, sr):
 def estimate_key(y, sr):
     chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     chroma_mean = np.mean(chroma, axis=1)
-
-    keys = ["C", "C#", "D", "D#", "E", "F", 
+    keys = ["C", "C#", "D", "D#", "E", "F",
             "F#", "G", "G#", "A", "A#", "B"]
-
     key_index = np.argmax(chroma_mean)
     return keys[key_index]
+
+# Detect energy for drop points
+def detect_energy_sections(y, sr):
+    hop_length = 512
+    rms = librosa.feature.rms(y=y, hop_length=hop_length)[0]
+    times = librosa.frames_to_time(range(len(rms)), sr=sr, hop_length=hop_length)
+
+    avg_energy = np.mean(rms)
+    low_threshold = avg_energy * 0.6
+    high_threshold = avg_energy * 1.4
+
+    low_energy_times = times[rms < low_threshold]
+    high_energy_times = times[rms > high_threshold]
+
+    return low_energy_times, high_energy_times
+
+def detect_first_drop(high_energy_times):
+    if len(high_energy_times) == 0:
+        return None
+    return round(float(high_energy_times[0]), 1)
 
 # Analyze a single track
 def analyze_track(path):
     print(f"Analyzing: {path}")
+
     y, sr = librosa.load(path, mono=True)
     duration = librosa.get_duration(y=y, sr=sr)
+
     bpm = estimate_bpm(y, sr)
     key = estimate_key(y, sr)
     camelot = CAMELOT_MAP.get(key, "Unknown")
 
-    print(f"Duration: {round(duration,1)} sec | BPM: {bpm} | Key: {key} | Camelot: {camelot}")
+    low_energy, high_energy = detect_energy_sections(y, sr)
+    first_drop = detect_first_drop(high_energy)
 
-    # Return as dict for CSV-friendly integration
+    print(f"Duration: {round(duration,1)} sec")
+    print(f"BPM: {bpm}")
+    print(f"Key: {key}  |  Camelot: {camelot}")
+    if first_drop is not None:
+        print(f"First Drop Around: {first_drop} sec")
+
     return {
         "File": os.path.basename(path),
         "Duration (s)": round(duration,1),
         "BPM": bpm,
         "Key": key,
-        "Camelot": camelot
+        "Camelot": camelot,
+        "First Drop (s)": first_drop if first_drop is not None else ""
     }
 
-# Append single track results to CSV
+# Append results to CSV
 def append_to_csv(results, csv_path="analysis_results.csv"):
-    file_exists = os.path.isfile(csv_path)
+    fieldnames = ["File","Duration (s)","BPM","Key","Camelot","First Drop (s)"]
+    write_header = not os.path.isfile(csv_path) or os.path.getsize(csv_path) == 0
 
     with open(csv_path, "a", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["File","Duration (s)","BPM","Key","Camelot"])
-        if not file_exists:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        if write_header:
             writer.writeheader()
         writer.writerow(results)
 
-# Analyze single file or folder
+# Analyze file or folder (with subfolders)
 def analyze_path(input_path, csv_path="analysis_results.csv"):
     if os.path.isfile(input_path):
         results = analyze_track(input_path)
         append_to_csv(results, csv_path)
-
     elif os.path.isdir(input_path):
-        for file in sorted(os.listdir(input_path)):
-            if file.lower().endswith((".mp3", ".wav", ".flac")):
-                full_path = os.path.join(input_path, file)
-                print("-" * 40)
-                results = analyze_track(full_path)
-                append_to_csv(results, csv_path)
+        for root, _, files in os.walk(input_path):
+            for file in sorted(files):
+                if file.lower().endswith((".mp3",".wav",".flac")):
+                    full_path = os.path.join(root, file)
+                    print("-" * 40)
+                    results = analyze_track(full_path)
+                    append_to_csv(results, csv_path)
     else:
         print("Invalid path:", input_path)
 
