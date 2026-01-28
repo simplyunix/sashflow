@@ -79,6 +79,19 @@ deep-house-..,.226.2,129.2,A,11B,15.5
 house-405231.mp3,190.0,117.5,G,9B,4.0
 This CSV can be imported into Excel, Rekordbox, or other DJ tools for planning harmonic and tempo‑aware sets.
 
+🧪 Example CSV Output
+After running:
+./scripts/analyze.sh tracks
+You’ll get a CSV file (analysis_results.csv) with contents like this:
+./scripts/analyze.sh tracks
+| File                           | Duration (s) | BPM   | Key | Camelot | First Drop (s) |
+| ------------------------------ | ------------ | ----- | --- | ------- | -------------- |
+| deep-house-12mp3-354595.mp3    | 226.2        | 129.2 | A   | 11B     | 15.5           |
+| house-405231.mp3               | 190.0        | 117.5 | G   | 9B      | 4.0            |
+| house-music-309375.mp3         | 136.0        | 117.5 | D   | 10B     | 8.0            |
+| tech-house-3mp3-353347.mp3     | 171.6        | 123.0 | A#  | 6B      | 15.5           |
+| tropical-deep-house-117020.mp3 | 237.4        | 123.0 | C   | 8B      | 15.7           |
+
 🧹 Git Hygiene
 Make sure your commits do not include:
 
