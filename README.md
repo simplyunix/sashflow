@@ -26,6 +26,11 @@ SASHflow analyzes audio files and reports:
 ✔ CSV export for set planning  
 ✔ Works on Linux/macOS/Windows
 
+## 📦 Features: We now have
+✅ Tracks analyzed (BPM, key, energy, drop)
+✅ Smart playlist order generated
+✅ Playlist successfully inside Rekordbox
+
 ---
 
 ## ⚙️ Prerequisites
@@ -127,11 +132,6 @@ Submit a pull request
 
 📝 License
 MIT License — see the LICENSE file
-
-🙌 We now have
-✅ Tracks analyzed (BPM, key, energy, drop)
-✅ Smart playlist order generated
-✅ Playlist successfully inside Rekordbox
 
 📬 Author
 Sasi Chand — Passionate about music, Python, and mixing flows 🌀
